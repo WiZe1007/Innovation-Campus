@@ -9,10 +9,10 @@ typedef struct s_maze {
     int height;
 } t_maze;
 
-typedef struct s_point {
-    int x;
-    int y;
-} t_point;
+typedef struct s_path {
+    t_point *path;
+    int size;
+} t_path;
 
 int mx_atoi(const char *str);
 
@@ -37,6 +37,12 @@ t_point **mx_find_path(t_maze *maze, t_point *start, t_point *end);
 void mx_print_usage(void);
 
 void mx_print_error(const char *message);
+
+t_point *mx_create_point(int x, int y);
+
+t_point *mx_next_point(t_maze *maze, t_point *point);
+
+int mx_path_length(t_path *path);
 
 #endif
 

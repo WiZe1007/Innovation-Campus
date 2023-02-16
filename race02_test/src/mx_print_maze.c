@@ -1,4 +1,5 @@
 #include "way_home.h"
+#include <stdio.h>
 
 void mx_print_maze(t_maze *maze) {
     for (int i = 0; i < maze->height; i++) {

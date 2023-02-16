@@ -1,4 +1,5 @@
 #include "way_home.h"
+#include <stdlib.h>
 
 void mx_print_error(const char *message) {
     mx_printerr("Error: ");

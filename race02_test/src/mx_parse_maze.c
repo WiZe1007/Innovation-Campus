@@ -1,4 +1,9 @@
 #include "way_home.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <stddef.h>
+#include <fcntl.h>
+#include <unistd.h>
 
 t_maze *mx_parse_maze(const char *file) {
     // Открываем файл для чтения.

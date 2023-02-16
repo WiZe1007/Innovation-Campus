@@ -24,10 +24,13 @@ t_point *mx_next_point(t_maze *maze, t_point *point) {
 }
 
 t_point *mx_create_point(int x, int y) {
-    t_point *point = (t_point *)malloc(sizeof(t_point));
-    point->x = x;
-    point->y = y;
-    return point;
+    t_point *result = (t_point *)malloc(sizeof(t_point));
+    if (result == NULL)
+        return NULL;
+
+    result->x = x;
+    result->y = y;
+    return result;
 }
 
 
