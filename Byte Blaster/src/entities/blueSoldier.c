@@ -12,10 +12,12 @@
 #include "../game/effects.h"
 #include "../system/atlas.h"
 #include "../system/draw.h"
-#include "greenSoldier.h"
+#include "../system/sound.h"
+#include "../system/util.h"
+#include "blueSoldier.h"
 
-#define RELOAD_SPEED 14
-#define BULLET_SPEED 12
+#define RELOAD_SPEED 18
+#define BULLET_SPEED 8
 
 extern App	 app;
 extern Stage stage;
@@ -24,13 +26,13 @@ static AtlasImage *standTexture = NULL;
 static AtlasImage *bulletTexture;
 
 static void tick(Entity *self);
+static void touch(Entity *self, Entity *other);
 static void draw(Entity *self);
 static void takeDamage(Entity *self, int amount, Entity *attacker);
 static void lookForPlayer(Entity *self);
 static void fireBullet(Entity *self);
-static void touch(Entity *self, Entity *other);
 
-void initGreenSoldier(Entity *e)
+void initBlueSoldier(Entity *e)
 {
 	EnemySoldier *s;
 
@@ -39,18 +41,12 @@ void initGreenSoldier(Entity *e)
 
 	if (standTexture == NULL)
 	{
-		standTexture = getAtlasImage("gfx/sprites/greenSoldierStand.png", 1);
+		standTexture = getAtlasImage("gfx/sprites/blueSoldierStand.png", 1);
 
 		bulletTexture = getAtlasImage("gfx/sprites/enemyBullet.png", 1);
 	}
-	
-	if (standTexture == NULL || bulletTexture == NULL)
-        {
-          free(s);
-          return;
-        }
 
-	s->life = 5;
+	s->life = 3;
 	s->thinkTime = FPS * (1 + rand() % 3);
 
 	e->facing = FACING_RIGHT;
@@ -66,10 +62,6 @@ void initGreenSoldier(Entity *e)
 
 static void tick(Entity *self)
 {
-        if (self == NULL || stage.player == NULL)
-        {
-          return;
-        }
 	EnemySoldier *s;
 
 	s = (EnemySoldier *)self->data;
@@ -111,17 +103,13 @@ static void tick(Entity *self)
 
 static void lookForPlayer(Entity *self)
 {
-        if (self == NULL || stage.player == NULL)
-        {
-          return;
-        }
 	int			  distX, distY;
 	EnemySoldier *s;
 
 	distX = abs(self->x - stage.player->x);
 	distY = abs(self->y - stage.player->y);
 
-	if (distX <= SCREEN_WIDTH / 2 && distY <= self->texture->rect.h)
+	if (distX <= SCREEN_WIDTH / 2 && distY <= SCREEN_HEIGHT / 2)
 	{
 		if ((self->facing == FACING_LEFT && stage.player->x < self->x) || (self->facing == FACING_RIGHT && stage.player->x > self->x))
 		{
@@ -165,9 +153,8 @@ static void takeDamage(Entity *self, int amount, Entity *attacker)
         return;
     }
 
-    Entity *g;
+    Entity *a;
     EnemySoldier *s;
-    int i, x, y;
 
     if (attacker == stage.player) {
         s = (EnemySoldier *)self->data;
@@ -178,29 +165,20 @@ static void takeDamage(Entity *self, int amount, Entity *attacker)
         s->thinkTime = FPS / 4;
 
         if (s->life <= 0) {
-            for (i = 0; i < 16; i++) {
-                x = self->x + rand() % self->texture->rect.w;
-                y = self->y + rand() % self->texture->rect.h;
-                addExplosionEffect(x, y, 96);
-            }
-
-            for (i = 0; i < 4; i++) {
-                x = self->x + (self->texture->rect.w / 2);
-                y = self->y + (self->texture->rect.h / 2);
-                addDebris(x, y);
-            }
 
             if (rand() % 2 == 0) { 
-                g = spawnEntity();
-                g->x = self->x + (self->texture->rect.w / 2);
-                g->y = self->y + (self->texture->rect.h / 2);
-                g->dx = (1.0 * (rand() % 400 - rand() % 400)) * 0.01;
-                g->dy = (1000 + (rand() % 700)) * -0.01;
-                initHealth(g);
-                g->flags |= EF_BOUNCES;
+                a = spawnEntity();
+                a->x = self->x + (self->texture->rect.w / 2);
+                a->y = self->y + (self->texture->rect.h / 2);
+                a->dx = (1.0 * (rand() % 400 - rand() % 400)) * 0.01;
+                a->dy = (1000 + (rand() % 700)) * -0.01;
+                initSpreadGun(a);
+                a->flags |= EF_BOUNCES;
             }
 
             self->dead = 1;
+            
+            playSound(SND_EXPLOSION, CH_ANY);
         }
     }
 }
@@ -224,7 +202,13 @@ static void fireBullet(Entity *self)
 
 	b->x = self->facing == FACING_RIGHT ? self->x + self->texture->rect.w : self->x;
 	b->y = self->y + 19;
-	b->dx = self->facing == FACING_RIGHT ? BULLET_SPEED : -BULLET_SPEED;
+
+	calcSlope(stage.player->x + (stage.player->texture->rect.w / 2), stage.player->y, b->x, b->y, &b->dx, &b->dy);
+
+	b->dx *= BULLET_SPEED;
+	b->dy *= BULLET_SPEED;
 
 	((EnemySoldier *)self->data)->reload = RELOAD_SPEED;
+
+	playSound(SND_ENEMY_SHOOT, CH_ENEMY);
 }

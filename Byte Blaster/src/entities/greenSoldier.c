@@ -12,6 +12,7 @@
 #include "../game/effects.h"
 #include "../system/atlas.h"
 #include "../system/draw.h"
+#include "../system/sound.h"
 #include "greenSoldier.h"
 
 #define RELOAD_SPEED 14
@@ -43,12 +44,6 @@ void initGreenSoldier(Entity *e)
 
 		bulletTexture = getAtlasImage("gfx/sprites/enemyBullet.png", 1);
 	}
-	
-	if (standTexture == NULL || bulletTexture == NULL)
-        {
-          free(s);
-          return;
-        }
 
 	s->life = 5;
 	s->thinkTime = FPS * (1 + rand() % 3);
@@ -66,10 +61,6 @@ void initGreenSoldier(Entity *e)
 
 static void tick(Entity *self)
 {
-        if (self == NULL || stage.player == NULL)
-        {
-          return;
-        }
 	EnemySoldier *s;
 
 	s = (EnemySoldier *)self->data;
@@ -111,10 +102,6 @@ static void tick(Entity *self)
 
 static void lookForPlayer(Entity *self)
 {
-        if (self == NULL || stage.player == NULL)
-        {
-          return;
-        }
 	int			  distX, distY;
 	EnemySoldier *s;
 
@@ -167,7 +154,6 @@ static void takeDamage(Entity *self, int amount, Entity *attacker)
 
     Entity *g;
     EnemySoldier *s;
-    int i, x, y;
 
     if (attacker == stage.player) {
         s = (EnemySoldier *)self->data;
@@ -178,17 +164,6 @@ static void takeDamage(Entity *self, int amount, Entity *attacker)
         s->thinkTime = FPS / 4;
 
         if (s->life <= 0) {
-            for (i = 0; i < 16; i++) {
-                x = self->x + rand() % self->texture->rect.w;
-                y = self->y + rand() % self->texture->rect.h;
-                addExplosionEffect(x, y, 96);
-            }
-
-            for (i = 0; i < 4; i++) {
-                x = self->x + (self->texture->rect.w / 2);
-                y = self->y + (self->texture->rect.h / 2);
-                addDebris(x, y);
-            }
 
             if (rand() % 2 == 0) { 
                 g = spawnEntity();
@@ -201,6 +176,8 @@ static void takeDamage(Entity *self, int amount, Entity *attacker)
             }
 
             self->dead = 1;
+            
+            playSound(SND_EXPLOSION, CH_ANY);
         }
     }
 }
@@ -227,4 +204,6 @@ static void fireBullet(Entity *self)
 	b->dx = self->facing == FACING_RIGHT ? BULLET_SPEED : -BULLET_SPEED;
 
 	((EnemySoldier *)self->data)->reload = RELOAD_SPEED;
+	
+	playSound(SND_ENEMY_SHOOT, CH_ENEMY);
 }
